@@ -1,0 +1,94 @@
+--// AIMBOT HUB COMPLETO V2 --// Botão abrir/fechar + hitbox RGB + heart
+
+local Players = game:GetService("Players") local RunService = game:GetService("RunService") local UserInputService = game:GetService("UserInputService") local Camera = workspace.CurrentCamera local LocalPlayer = Players.LocalPlayer
+
+-- CONFIG local Config = { Aimbot = false, FOV = 200, Range = 1000, ShowFOV = true, RGB = true, Hitbox = true }
+
+-- BOTÃO FLUTUANTE (ABRIR/FECHAR) local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+
+local OpenBtn = Instance.new("TextButton", ScreenGui) OpenBtn.Size = UDim2.new(0,120,0,40) OpenBtn.Position = UDim2.new(0,20,0,200) OpenBtn.Text = "ABRIR HUB" OpenBtn.BackgroundColor3 = Color3.fromRGB(30,30,30) OpenBtn.TextColor3 = Color3.new(1,1,1) OpenBtn.Active = true OpenBtn.Draggable = true
+
+-- HUB local Main = Instance.new("Frame", ScreenGui) Main.Size = UDim2.new(0, 260, 0, 220) Main.Position = UDim2.new(0.3, 0, 0.3, 0) Main.BackgroundColor3 = Color3.fromRGB(20,20,20) Main.Visible = false Main.Active = true Main.Draggable = true
+
+OpenBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible OpenBtn.Text = Main.Visible and "FECHAR HUB" or "ABRIR HUB" end)
+
+-- TÍTULO local Title = Instance.new("TextLabel", Main) Title.Size = UDim2.new(1,0,0,30) Title.Text = "Aimbot Hub V2" Title.BackgroundColor3 = Color3.fromRGB(30,30,30) Title.TextColor3 = Color3.new(1,1,1)
+
+-- BOTÕES local function createButton(text, y) local btn = Instance.new("TextButton", Main) btn.Position = UDim2.new(0,10,0,y) btn.Size = UDim2.new(0,240,0,30) btn.Text = text return btn end
+
+local ToggleAimbot = createButton("Aimbot: OFF",40) local ToggleFOV = createButton("FOV: ON",80) local ToggleRGB = createButton("RGB: ON",120) local ToggleHitbox = createButton("Hitbox: ON",160)
+
+-- FOV local FOVCircle = Drawing.new("Circle") FOVCircle.Thickness = 2 FOVCircle.NumSides = 60 FOVCircle.Visible = true
+
+-- RGB local hue = 0
+
+-- HITBOX HEART local Hitboxes = {}
+
+local function createHeart(player) if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+
+if Hitboxes[player] then Hitboxes[player]:Destroy() end
+
+local part = Instance.new("Part")
+part.Size = Vector3.new(4,4,4)
+part.Shape = Enum.PartType.Ball
+part.Material = Enum.Material.Neon
+part.CanCollide = false
+part.Anchored = false
+part.Name = "HeartHitbox"
+part.Parent = player.Character
+
+local weld = Instance.new("WeldConstraint")
+weld.Part0 = part
+weld.Part1 = player.Character.HumanoidRootPart
+weld.Parent = part
+
+part.Position = player.Character.HumanoidRootPart.Position
+
+Hitboxes[player] = part
+
+end
+
+-- LOOP RunService.RenderStepped:Connect(function() local size = Camera.ViewportSize FOVCircle.Position = Vector2.new(size.X/2, size.Y/2) FOVCircle.Radius = Config.FOV
+
+if Config.RGB then
+    hue = hue + 0.01
+end
+
+for _,p in pairs(Players:GetPlayers()) do
+    if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+        
+        -- HITBOX
+        if Config.Hitbox then
+            if not Hitboxes[p] then
+                createHeart(p)
+            end
+            if Hitboxes[p] then
+                Hitboxes[p].Color = Config.RGB and Color3.fromHSV(hue,1,1) or Color3.fromRGB(255,0,0)
+            end
+        else
+            if Hitboxes[p] then
+                Hitboxes[p]:Destroy()
+                Hitboxes[p] = nil
+            end
+        end
+    end
+end
+
+FOVCircle.Visible = Config.ShowFOV
+FOVCircle.Color = Config.RGB and Color3.fromHSV(hue,1,1) or Color3.fromRGB(255,0,0)
+
+end)
+
+-- AIMBOT local function getClosest() local closest, dist = nil, math.huge for _,p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then local mag = (p.Character.Head.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude if mag < dist then closest = p dist = mag end end end return closest end
+
+RunService.RenderStepped:Connect(function() if Config.Aimbot then local target = getClosest() if target and target.Character and target.Character:FindFirstChild("Head") then Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position) end end end)
+
+-- BOTÕES ToggleAimbot.MouseButton1Click:Connect(function() Config.Aimbot = not Config.Aimbot ToggleAimbot.Text = "Aimbot: "..(Config.Aimbot and "ON" or "OFF") end)
+
+ToggleFOV.MouseButton1Click:Connect(function() Config.ShowFOV = not Config.ShowFOV ToggleFOV.Text = "FOV: "..(Config.ShowFOV and "ON" or "OFF") end)
+
+ToggleRGB.MouseButton1Click:Connect(function() Config.RGB = not Config.RGB ToggleRGB.Text = "RGB: "..(Config.RGB and "ON" or "OFF") end)
+
+ToggleHitbox.MouseButton1Click:Connect(function() Config.Hitbox = not Config.Hitbox ToggleHitbox.Text = "Hitbox: "..(Config.Hitbox and "ON" or "OFF") end)
+
+print("Hub V2 carregado!")
